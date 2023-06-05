@@ -4,6 +4,7 @@ package com.tads.dac.auth.controller;
 import com.tads.dac.auth.DTOs.AuthDTO;
 import com.tads.dac.auth.DTOs.AuthLoginDTO;
 import com.tads.dac.auth.exception.ContaAlredyExists;
+import com.tads.dac.auth.exception.ContaNotAprovedException;
 import com.tads.dac.auth.exception.ContaNotExistException;
 import com.tads.dac.auth.exception.ContaWrongPassword;
 import com.tads.dac.auth.exception.EncryptionException;
@@ -36,7 +37,7 @@ public class AuthController {
         try {
             AuthDTO dto2 = serv.getAuth(email, senha);
             return new ResponseEntity<>(dto2, HttpStatus.OK);
-        } catch (ContaWrongPassword e) {
+        } catch (ContaWrongPassword | ContaNotAprovedException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch(ContaNotExistException e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -63,7 +64,7 @@ public class AuthController {
     @PostMapping("/auth")
     public ResponseEntity<?> fazInsert(@RequestBody AuthDTO dto){
         try {
-            dto = serv.insertAuth(dto);
+            dto = serv.insertAuthGerente(dto);
             return new ResponseEntity<>(dto, HttpStatus.OK);
         } catch (ContaAlredyExists | InvalidUserTypeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -73,8 +74,23 @@ public class AuthController {
     }
     
     @DeleteMapping("/auth/{email}")
-    public ResponseEntity<?> fazInsert(@PathVariable(value = "email") String email){
+    public ResponseEntity<?> delete(@PathVariable(value = "email") String email){
         serv.deleteLogin(email);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+    
+    @PutMapping("/auth/{oldEmail}")
+    public ResponseEntity<?> aprovar(
+            @PathVariable(value = "oldEmail") String oldEmail
+    ) {
+        try {
+            AuthDTO dto2 = serv.aprovarCliente(oldEmail);
+            return new ResponseEntity<>(dto2, HttpStatus.OK);
+        } catch (EncryptionException e) {
+             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (ContaNotExistException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        
     }
 }
