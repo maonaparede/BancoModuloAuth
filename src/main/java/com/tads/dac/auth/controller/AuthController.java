@@ -31,6 +31,7 @@ public class AuthController {
     @Autowired
     private AuthService serv;
     
+    //R2
     @GetMapping("/auth/{email}/{senha}")
     public ResponseEntity<?> fazLogin(@PathVariable(value = "email") String email,
             @PathVariable(value = "senha") String senha){
@@ -46,6 +47,7 @@ public class AuthController {
         }
     }
     
+    /*
     @PutMapping("/auth/{oldEmail}/{newEmail}")
     public ResponseEntity<?> fazUpdate(
             @PathVariable(value = "oldEmail") String oldEmail,
@@ -60,6 +62,7 @@ public class AuthController {
              return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
+    
     
     @PostMapping("/auth")
     public ResponseEntity<?> fazInsert(@RequestBody AuthDTO dto){
@@ -93,4 +96,5 @@ public class AuthController {
         }
         
     }
+    */
 }

@@ -3,6 +3,7 @@ package com.tads.dac.auth.service;
 
 import com.tads.dac.auth.DTOs.AuthDTO;
 import com.tads.dac.auth.DTOs.AuthTotalDTO;
+import com.tads.dac.auth.DTOs.RejeitaClienteDTO;
 import com.tads.dac.auth.exception.ContaAlredyExists;
 import com.tads.dac.auth.exception.ContaNotAprovedException;
 import com.tads.dac.auth.exception.ContaNotExistException;
@@ -96,7 +97,7 @@ public class AuthService {
     
     public AuthDTO insertAuthGerente(AuthDTO dto) throws ContaAlredyExists, InvalidUserTypeException, EncryptionException{
         Optional<Auth> conta = rep.findById(dto.getEmail());
-        if(conta.isPresent()) throw new ContaAlredyExists("Uma Conta Com Esse Email Já Existe!");
+        if(conta.isPresent()) throw new ContaAlredyExists("Uma Conta Com Esse Email '" + dto.getEmail() +"' Já Existe!");
         
         //Admin, Cliente e Gerente - Se não for nenhum desses tipos manda exception
         if("A".equals(dto.getTipoUser()) || 
@@ -122,20 +123,21 @@ public class AuthService {
     }    
     
     //Não tem como atualizar o id(que é o email), então tem que excluir o registro e fazer outro :)
-    public AuthDTO updateAuth(String oldEmail, String newEmail) throws ContaAlredyExists, ContaNotExistException{
+    public AuthTotalDTO updateAuth(String oldEmail, String newEmail) throws ContaAlredyExists, ContaNotExistException{
         Optional<Auth> oldConta = rep.findById(oldEmail);
         Optional<Auth> newConta = rep.findById(newEmail);
         
         if(oldEmail.equals(newEmail)) return null;
         if(!oldConta.isPresent()) throw new ContaNotExistException("Essa Conta Que Está Tentando Mudar o Email Não Existe!");
-        if(newConta.isPresent()) throw new ContaAlredyExists("Uma Conta Com Esse Email Já Existe!");       
+        if(newConta.isPresent()) throw new ContaAlredyExists("Uma Conta Com Esse Email '" + newEmail + "' Já Existe!");       
         
         Auth conta = oldConta.get();
         conta.setEmail(newEmail);
         
         rep.deleteById(oldEmail);
         conta = rep.save(conta);
-        AuthDTO dto = mapper.map(conta, AuthDTO.class);
+        
+        AuthTotalDTO dto = mapper.map(conta, AuthTotalDTO.class);
         return dto;
     }
     
@@ -153,6 +155,33 @@ public class AuthService {
         }
         throw new ContaNotExistException("Essa Conta Não Existe");
         
+    }
+
+    public void aprovarClienteRollback(String emailString) throws ContaNotExistException {
+        Optional<Auth> ct = rep.findById(emailString);
+        if(ct.isPresent()){
+            Auth reg = ct.get();
+            reg.setSalt("1"); //Pra não deixar o user entrar
+            reg.setTipoUser("C");
+            rep.save(reg);
+        }else{
+           throw new ContaNotExistException("Essa Conta Não Existe");
+        }
+    }
+
+    public AuthTotalDTO rejeitaCliente(RejeitaClienteDTO dto) throws ContaNotExistException {
+        Optional<Auth> model = rep.findById(dto.getEmail());
+        if (model.isPresent()) {
+            AuthTotalDTO dtoRet = mapper.map(model.get(), AuthTotalDTO.class);
+            rep.deleteById(dto.getEmail());
+            return dtoRet;
+        }
+        throw new ContaNotExistException("Essa Conta Não Existe");
+    }
+
+    public void rejeitaClienteRollback(AuthTotalDTO dto) {
+        Auth auth = mapper.map(dto, Auth.class);
+        rep.save(auth);
     }
     
 }
