@@ -1,7 +1,7 @@
 
 package com.tads.dac.auth.mensageria;
 
-import com.tads.dac.auth.DTOs.PerfilUpdateDTO;
+import com.tads.dac.auth.DTOs.AlteraGerenteDTO;
 import com.tads.dac.auth.DTOs.MensagemDTO;
 import com.tads.dac.auth.exception.ContaAlredyExists;
 import com.tads.dac.auth.exception.ContaNotExistException;
@@ -14,7 +14,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ConsumerSagaAlteraPerfilAuth {
+public class ConsumerSagaAlteraGerenteAuth {
 
     @Autowired
     private ModelMapper mapper;
@@ -24,9 +24,9 @@ public class ConsumerSagaAlteraPerfilAuth {
     @Autowired
     private AuthService serv;
 
-    @RabbitListener(queues = "perfil-auth-saga")
+    @RabbitListener(queues = "alt-ger-auth-saga")
     public void commitOrdem(@Payload MensagemDTO msg) {
-        PerfilUpdateDTO dto = mapper.map(msg.getReturnObj(), PerfilUpdateDTO.class);
+        AlteraGerenteDTO dto = mapper.map(msg.getReturnObj(), AlteraGerenteDTO.class);
         try {
             if(!dto.getNewEmail().equals(dto.getOldEmail())){
                 serv.updateAuth(dto.getOldEmail(), dto.getNewEmail());
@@ -34,17 +34,16 @@ public class ConsumerSagaAlteraPerfilAuth {
         } catch (ContaAlredyExists | ContaNotExistException ex) {
             msg.setMensagem(ex.getMessage());
         }
-        template.convertAndSend("perfil-auth-saga-receive", msg);
+        template.convertAndSend("alt-ger-auth-saga-receive", msg);
     }
 
-    //Refaz
-    @RabbitListener(queues = "perfil-auth-saga-rollback")
+    @RabbitListener(queues = "alt-ger-auth-saga-rollback")
     public void rollbackOrdem(@Payload MensagemDTO msg) {
         try {
-            PerfilUpdateDTO dto = mapper.map(msg.getReturnObj(), PerfilUpdateDTO.class);
+            AlteraGerenteDTO dto = mapper.map(msg.getReturnObj(), AlteraGerenteDTO.class);
             serv.updateAuth(dto.getNewEmail(), dto.getOldEmail());
         } catch (ContaAlredyExists | ContaNotExistException ex) {
-            System.out.println("Deu erro no Módulo Auth altera Perfil: " + ex.getMessage());
+            System.out.println("Deu erro no Módulo Auth altera Gerente: " + ex.getMessage());
         }
     }
     

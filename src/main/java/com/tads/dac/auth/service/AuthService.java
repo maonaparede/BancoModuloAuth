@@ -126,18 +126,19 @@ public class AuthService {
     public AuthTotalDTO updateAuth(String oldEmail, String newEmail) throws ContaAlredyExists, ContaNotExistException{
         Optional<Auth> oldConta = rep.findById(oldEmail);
         Optional<Auth> newConta = rep.findById(newEmail);
-        
+
         if(oldEmail.equals(newEmail)) return null;
         if(!oldConta.isPresent()) throw new ContaNotExistException("Essa Conta Que Está Tentando Mudar o Email Não Existe!");
         if(newConta.isPresent()) throw new ContaAlredyExists("Uma Conta Com Esse Email '" + newEmail + "' Já Existe!");       
-        
+
         Auth conta = oldConta.get();
+        AuthTotalDTO dto = mapper.map(conta, AuthTotalDTO.class);
+        
         conta.setEmail(newEmail);
         
         rep.deleteById(oldEmail);
-        conta = rep.save(conta);
+        rep.save(conta);
         
-        AuthTotalDTO dto = mapper.map(conta, AuthTotalDTO.class);
         return dto;
     }
     

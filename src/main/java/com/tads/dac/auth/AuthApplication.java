@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class AuthApplication {
+        //Dragonb4llZ
         @Bean
         public static ModelMapper modelMapper(){
             return new ModelMapper();
